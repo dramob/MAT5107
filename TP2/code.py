@@ -10,7 +10,7 @@ from sklearn.metrics import silhouette_score
 from sklearn.decomposition import PCA
 from scipy.stats import f_oneway
 
-# Chemin vers le fichier de données
+# Chemin vers le fichier de donnéesx
 file_path = './Metasample.txt'
 
 # 1. Chargement des données
@@ -70,6 +70,8 @@ plt.xlabel('Nombre de clusters k')
 plt.ylabel('Coefficient de silhouette moyen')
 plt.title('Coefficient de silhouette pour déterminer le k optimal')
 plt.xticks(K)
+plt.tight_layout()
+plt.savefig('silhouette_coefficient.png')  # Enregistrement du graphique
 plt.show()
 
 # Détermination du k optimal (k qui maximise le coefficient de silhouette)
@@ -86,28 +88,27 @@ kmeans.fit(data_scaled)
 # Ajout des labels de clusters aux données originales
 data_T['Cluster'] = kmeans.labels_
 
+# Vérification de la répartition des échantillons dans les clusters
+print("\nRépartition des échantillons dans les clusters :")
+print(data_T['Cluster'].value_counts())
+
 # 5. Identification de la variable la plus discriminante par ANOVA
 # ---------------------------------------------------------------
 
-# Dictionnaire pour stocker les p-valeurs pour chaque variable
-p_values = {}
+# Liste des variables (genres bactériens)
 variables = data_T.columns[:-1]  # Exclure la colonne 'Cluster'
 
-# 5. Identification de la variable la plus discriminante par ANOVA
-# ---------------------------------------------------------------
-
-# Liste des variables à tester (exclure celles avec variance nulle)
+# Exclusion des variables avec variance nulle dans au moins un cluster
 zero_variance_vars = []
-
 for var in variables:
     variances = [data_T[data_T['Cluster'] == i][var].var() for i in range(optimal_k)]
     if any(v == 0 for v in variances):
         zero_variance_vars.append(var)
 
-# Exclusion des variables avec variance nulle
+# Liste des variables à tester
 variables_to_test = [var for var in variables if var not in zero_variance_vars]
 
-print(f"Nombre de variables avec variance non nulle : {len(variables_to_test)}")
+print(f"\nNombre de variables avec variance non nulle : {len(variables_to_test)}")
 
 # Dictionnaire pour stocker les p-valeurs
 p_values = {}
@@ -129,17 +130,20 @@ else:
 
     # Identification de la variable avec la plus petite p-valeur
     most_discriminative_var = sorted_p_values[0][0]
-    print(f"La variable la plus discriminante est : {most_discriminative_var}")
+    print(f"\nLa variable la plus discriminante est : {most_discriminative_var}")
     print(f"P-valeur associée : {sorted_p_values[0][1]:.4e}")
-# 6. Représentation des clusters par un boxplot sur la variable la plus discriminante
-# -----------------------------------------------------------------------------------
 
-plt.figure(figsize=(8, 6))
-sns.boxplot(x='Cluster', y=most_discriminative_var, data=data_T)
-plt.title(f'Boxplot de {most_discriminative_var} par cluster')
-plt.xlabel('Cluster')
-plt.ylabel(f'Abondance de {most_discriminative_var}')
-plt.show()
+    # 6. Représentation des clusters par un boxplot sur la variable la plus discriminante
+    # -----------------------------------------------------------------------------------
+
+    plt.figure(figsize=(8, 6))
+    sns.boxplot(x='Cluster', y=most_discriminative_var, data=data_T)
+    plt.title(f'Boxplot de {most_discriminative_var} par cluster')
+    plt.xlabel('Cluster')
+    plt.ylabel(f'Abondance de {most_discriminative_var}')
+    plt.tight_layout()
+    plt.savefig('boxplot_discriminative_variable.png')  # Enregistrement du boxplot
+    plt.show()
 
 # 7. Analyse en composantes principales (ACP) et visualisation
 # ------------------------------------------------------------
@@ -159,6 +163,8 @@ plt.title('Projection des données sur les deux premières composantes principal
 plt.xlabel('Composante principale 1')
 plt.ylabel('Composante principale 2')
 plt.legend(title='Cluster')
+plt.tight_layout()
+plt.savefig('pca_clusters.png')  # Enregistrement du graphique ACP
 plt.show()
 
 # 8. Observations
